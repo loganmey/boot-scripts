@@ -1,6 +1,9 @@
 #!/bin/bash
 #don't know what this does
-yum install amazon-linux-extras httpd -y 
+
+#instal apache
+yum install amazon-linux-extras httpd -y
+#instal php
 amazon-linux-extras install php7.2 -y
 
 #instal apache
@@ -22,8 +25,9 @@ rm -rf wordpress
 #remove tar file
 rm -rf latest.tar.gz
 
-#don't know what this does
+#set permissions for directory
 chmod -R 755 /var/www/html/*
+#Giving Apache write access to /var/www/html
 chown -R apache:apache /var/www/html/*
 
 #start apache service
