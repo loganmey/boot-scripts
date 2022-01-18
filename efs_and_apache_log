@@ -1,0 +1,23 @@
+#cloud-config
+package_upgrade: true
+packages:
+- nfs-utils
+- httpd
+runcmd:
+- echo "$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone).fs-0ac3b23969db17224.efs.us-west-2.amazonaws.com:/    /var/www/html/efs-mount-point   nfs4    defaults" >> /etc/fstab
+- mkdir /var/www/html/efs-mount-point
+- mount -a
+- touch /var/www/html/efs-mount-point/test.html
+- service httpd start
+- chkconfig httpd on
+#extra for AWS interview
+- cd /var/www/html/efs-mount-point
+- echo "<html><body><h1>Hello AWS World</h1></body></html>" > index.html
+- echo "Logan- Hello world created"
+- aws s3 cp s3://logansbucket . --recursive
+- echo "Logan- s3 bucket imported"
+#change root directory
+- sed "s|/var/www/html|/var/www/html/efs-mount-point|" /etc/httpd/conf/httpd.conf
+- echo "Logan- s3 search replace /var/www/html with /var/www/html/efs-mount-point"
+- sudo systemctl restart httpd
+- echo "Logan- systemctl restart httpd"

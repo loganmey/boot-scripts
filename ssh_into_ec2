@@ -1,0 +1,4 @@
+ssh -i my_ec2_private_key.pem ec2-user@ec2-a-b-c-d.us-west-2.compute.amazonaws.com
+
+
+ ssh -i "aws_interview.pem" ec2-user@ec2-54-191-128-178.us-west-2.compute.amazonaws.com
