@@ -1,0 +1,9 @@
+#!/bin/bash
+yum update -y
+yum install httpd -y
+service httpd start
+cd /var/www/html
+#start apache server on reboot
+systemctl start httpd
+systemctl enable httpd
+echo "<html><body><h1>Hello Cloud Gurus</h1></body></html>" > index.html
