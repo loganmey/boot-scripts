@@ -1,0 +1,21 @@
+#cloud-config
+package_upgrade: true
+packages:
+- httpd
+- xfsprogs
+runcmd
+# sudo yum install xfsprogs
+#view available disks, output of lsblk removes the /dev/ prefix from full device paths.
+- sudo lsblk
+#device information, type "data" means no file system on the device
+- sudo file -s /dev/xvdf
+#information on all attached devices
+- sudo lsblk -f
+#create xfs filesystem on the device
+- sudo mkfs -t xfs /dev/xvdf
+#mkdir command to create a mount point directory for the volume
+- sudo mkdir /data
+#mount the volume at the directory you created
+- sudo mount /dev/xvdf /data
+#review file permissions
+- sudo chmod ugo-rwx /data
