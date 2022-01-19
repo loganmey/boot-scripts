@@ -31,6 +31,7 @@ runcmd:
 #edit fstab
 #In the following example, we mount the device with UUID aebf131c-6957-451e-8d34-ec978d9581ae to mount point /data and we use the xfs file system. We also use the defaults and nofail flags. We specify 0 to prevent the file system from being dumped, and we specify 2 to indicate that it is a non-root device.
 #UUID=5d18508e-3a83-42fa-b0b1-836868e3a33e  /var/www/html/ebs  xfs  defaults,nofail  0  2
+#press i key to start insert mode to edit file. press escape to exit insert mode. :wq to save and quit
 #test that fstab entry works
 - sudo umount /data
 - sudo mount -a
