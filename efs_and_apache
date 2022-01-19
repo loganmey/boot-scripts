@@ -13,6 +13,7 @@ runcmd:
 #extra for AWS interview
 - cd /var/www/html/efs
 - aws s3 cp s3://logansbucket . --recursive
-- sed "s|/var/www/html|/var/www/html/efs|" /etc/httpd/conf/httpd.conf
-- sudo systemctl restart httpd
-- chkconfig httpd on
+- sudo sed "s|/var/www/html|/var/www/html/efs|" /etc/httpd/conf/httpd.conf
+- sudo service httpd restart
+#- sudo /etc/init.d/apache2 restart
+#- sudo chkconfig httpd on

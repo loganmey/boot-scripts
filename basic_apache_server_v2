@@ -6,4 +6,5 @@ cd /var/www/html
 #start apache server on reboot
 systemctl start httpd
 systemctl enable httpd
-echo "<html><body><h1>Hello Cloud Gurus</h1></body></html>" > index.html
+echo "<html><body><h1>Hello AWS World lol</h1></body></html>" > index.html
+aws s3 cp s3://logansbucket . --recursive
