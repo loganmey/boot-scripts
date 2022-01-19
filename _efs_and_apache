@@ -4,7 +4,7 @@ packages:
 - nfs-utils
 - httpd
 runcmd:
-- echo "$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone).fs-0ac3b23969db17224.efs.us-west-2.amazonaws.com:/    /var/www/html/efs   nfs4    defaults" >> /etc/fstab
+- echo "$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone).0ac3b23969db17224.efs.us-west-2.amazonaws.com:/    /var/www/html/efs   nfs4    defaults" >> /etc/fstab
 - mkdir /var/www/html/efs
 - mount -a
 - service httpd start
