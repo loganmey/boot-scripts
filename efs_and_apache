@@ -7,11 +7,11 @@ runcmd:
 - echo "$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone).fs-0ac3b23969db17224.efs.us-west-2.amazonaws.com:/    /var/www/html/efs   nfs4    defaults" >> /etc/fstab
 - mkdir /var/www/html/efs
 - mount -a
-- echo "<html><body><h1>Hello AWS World</h1></body></html>" > index.html
 - service httpd start
 - chkconfig httpd on
 #extra for AWS interview
 - cd /var/www/html/efs
+- echo "<html><body><h1>Hello AWS World</h1></body></html>" > index.html
 - aws s3 cp s3://logansbucket . --recursive
 - sudo sed "s|/var/www/html|/var/www/html/efs|" /etc/httpd/conf/httpd.conf
 - sudo service httpd restart
