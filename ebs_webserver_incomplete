@@ -4,6 +4,34 @@ packages:
 - httpd
 - xfsprogs
 runcmd:
+- ebs_mount_point_1=/var/www/html/ebs
+- mkdir -p "${ebs_mount_point_1}"
+#start webserver
+- service httpd start
+- chkconfig httpd on
+#start apache server on reboot
+- sudo systemctl start httpd
+- sudo systemctl enable httpd
+#assume EBS volume is at /dev/xvdf
+#create xfs filesystem on the device
+- sudo mkfs -t xfs /dev/xvdf
+- sudo mount /dev/xvdf /var/www/html/ebs
+- sudo chmod ugo+rwx /var/www/html/ebs
+#backup of fstab file
+- sudo cp /etc/fstab /etc/fstab.orig
+
+
+
+#extras for AWS interview
+- cd /var/www/html/ebs
+- echo "<html><body><h1>Hello AWS World</h1></body></html>" > index.html
+- aws s3 cp s3://logansbucket . --recursive
+- sudo sed -i "s|/var/www/html|/var/www/html/ebs|" /etc/httpd/conf/httpd.conf
+- sudo apachectl configtest
+- sudo apachectl restart
+
+
+runcmd:
 # sudo yum install xfsprogs
 #view available disks, output of lsblk removes the /dev/ prefix from full device paths.
 - sudo lsblk
@@ -12,28 +40,31 @@ runcmd:
 #information on all attached devices
 - sudo lsblk -f
 #create xfs filesystem on the device
-- sudo mkfs -t xfs /dev/xvdf
+- sudo mkfs -t xfs /dev/xvdf1
 #mkdir command to create a mount point directory for the volume
-- sudo mkdir /data
+- sudo mkdir /var/www/html/ebs
 #mount the volume at the directory you created
-- sudo mount /dev/xvdf /data
-#review file permissions
-- sudo chmod ugo-rwx /data
+- sudo mount /dev/xvdf1 /var/www/html/ebs
+#make all file permissions 777  users groups other to read write executable
+- sudo chmod ugo+rwx /var/www/html/ebs
 #automatically mount an attached volume after reboot
 #optional create backup of /etc/fstab
 - sudo cp /etc/fstab /etc/fstab.orig
 #blkid to find the UUID of device
-- sudo blkid
+- sudo blkid /dev/xvdf
 # /dev/xvda1: LABEL="/" UUID="0a56d206-2a6d-46e6-b65f-11b7052f72cf" TYPE="xfs" PARTLABEL="Linux" PARTUUID="590d752e-20a4-404b-88db-bfebb1f9b90e"
 # /dev/xvdf: UUID="5d18508e-3a83-42fa-b0b1-836868e3a33e" TYPE="xfs"
 # Open the /etc/fstab file using any text editor
 - sudo vim /etc/fstab
 #edit fstab
 #In the following example, we mount the device with UUID aebf131c-6957-451e-8d34-ec978d9581ae to mount point /data and we use the xfs file system. We also use the defaults and nofail flags. We specify 0 to prevent the file system from being dumped, and we specify 2 to indicate that it is a non-root device.
-#UUID=5d18508e-3a83-42fa-b0b1-836868e3a33e  /var/www/html/ebs  xfs  defaults,nofail  0  2
+#UUID=fc779efd-390f-4681-8138-35f09abb55e9  /var/www/html/ebs  xfs  defaults,nofail  0  2
 #press i key to start insert mode to edit file. press escape to exit insert mode. :wq to save and quit
 #test that fstab entry works
 - sudo umount /data
 - sudo mount -a
 #optional restore fstab
 - sudo mv /etc/fstab.orig /etc/fstab
+#optional change webserver root Directory
+#- sudo sed -i "s|/var/www/html|/var/www/html/efs|" /etc/httpd/conf/httpd.conf
+#- sudo sed -i "s|/var/www/html/efs|/var/www/html/ebs|" /etc/httpd/conf/httpd.conf

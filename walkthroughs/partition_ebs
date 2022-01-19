@@ -1,0 +1,19 @@
+#cloud-config
+package_upgrade: true
+packages:
+#- httpd
+- xfsprogs
+runcmd:
+# create partiton
+# sudo yum install xfsprogs
+#list attached Devices
+- lsblk
+#Create physical volumes on the partition of your EBS volume
+#8e00 for LVM (logical or linux volume manager)
+#w to save changes on command prompt (n will create another partition)
+- sudo gdisk /dev/xvdf
+#verify with lsblk to list blk
+- lsblk -f
+#Creat physical volume from the partition
+- sudo pvcreate /dev/xvdf1
+#create a volume group to combine the new physical volumes
