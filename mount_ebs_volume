@@ -3,7 +3,7 @@ package_upgrade: true
 packages:
 - httpd
 - xfsprogs
-runcmd
+runcmd:
 # sudo yum install xfsprogs
 #view available disks, output of lsblk removes the /dev/ prefix from full device paths.
 - sudo lsblk
@@ -19,3 +19,20 @@ runcmd
 - sudo mount /dev/xvdf /data
 #review file permissions
 - sudo chmod ugo-rwx /data
+#automatically mount an attached volume after reboot
+#optional create backup of /etc/fstab
+- sudo cp /etc/fstab /etc/fstab.orig
+#blkid to find the UUID of device
+- sudo blkid
+# /dev/xvda1: LABEL="/" UUID="0a56d206-2a6d-46e6-b65f-11b7052f72cf" TYPE="xfs" PARTLABEL="Linux" PARTUUID="590d752e-20a4-404b-88db-bfebb1f9b90e"
+# /dev/xvdf: UUID="5d18508e-3a83-42fa-b0b1-836868e3a33e" TYPE="xfs"
+# Open the /etc/fstab file using any text editor
+- sudo vim /etc/fstab
+#edit fstab
+#In the following example, we mount the device with UUID aebf131c-6957-451e-8d34-ec978d9581ae to mount point /data and we use the xfs file system. We also use the defaults and nofail flags. We specify 0 to prevent the file system from being dumped, and we specify 2 to indicate that it is a non-root device.
+#UUID=5d18508e-3a83-42fa-b0b1-836868e3a33e  /var/www/html/ebs  xfs  defaults,nofail  0  2
+#test that fstab entry works
+- sudo umount /data
+- sudo mount -a
+#optional restore fstab
+- sudo mv /etc/fstab.orig /etc/fstab
