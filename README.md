@@ -1,5 +1,4 @@
 # boot_scripts
-Boot scripts for aws ec2 images
 
 
-This is just a simple file to save sample bootstrap scripts for various services.
+This is just a simple file to save sample bootstrap scripts for various services including AWS EC2 and dockerfiles.
