@@ -35,9 +35,86 @@ df -h
 #tmpfs           497M     0  497M   0% /dev/shm
 #/dev/xvda1      7.8G  982M  6.7G  13% /
 #/dev/xvdf       976M  1.3M  924M   1% /mnt/data-store
+
 #On your mounted volume, create a file and add some text to it.
-
 sudo sh -c "echo some text has been written > /mnt/data-store/file.txt"
-#Verify that the text has been written to your volume.
 
+#Verify that the text has been written to your volume.
 cat /mnt/data-store/file.txt
+
+/*
+Task 5: Create an Amazon EBS Snapshot
+In this task, you will create a snapshot of your EBS volume.
+
+You can create any number of point-in-time, consistent snapshots from Amazon EBS volumes at any time. Amazon EBS snapshots are stored in Amazon S3 with high durability. New Amazon EBS volumes can be created out of snapshots for cloning or restoring backups. Amazon EBS snapshots can also be easily shared among AWS users or copied over AWS regions.
+
+In the AWS Management Console, click on Volumes and select  My Volume.
+
+In the Actions menu, click Create Snapshot.
+
+Click Add Tag then configure:
+
+Key: Name
+Value: My Snapshot
+Click Create Snapshot then click Close
+Your snapshot will be listed in the Snapshots console.
+
+In the left navigation pane, click Snapshots.
+
+Your snapshot is displayed. It will start with a state of pending, which means that the snapshot is being created. It will then change to a state of completed. Only used storage blocks are copied to snapshots, so empty blocks do not take any snapshot storage space.
+
+In your remote SSH session, delete the file that you created on your volume.
+
+sudo rm /mnt/data-store/file.txt
+Verify that the file has been deleted.
+
+ls /mnt/data-store/
+Your file has been deleted.
+
+ 
+
+Task 6: Restore the Amazon EBS Snapshot
+If you ever wish to retrieve data stored in a snapshot, you can Restore the snapshot to a new EBS volume.
+
+Create a Volume Using Your Snapshot
+In the AWS Management Console, select  My Snapshot.
+
+In the Actions menu, click Create Volume.
+
+For Availability Zone Select the same availability zone that you used earlier.
+
+Click Add Tag then configure:
+
+Key: Name
+Value: Restored Volume
+Click Create Volume
+Click Close
+When restoring a snapshot to a new volume, you can also modify the configuration, such as changing the volume type, size or Availability Zone.
+
+Attach the Restored Volume to Your EC2 Instance
+In the left navigation pane, click Volumes.
+
+Select  Restored Volume.
+
+In the Actions menu, click Attach Volume.
+
+Click in the Instance field, then select the instance that appears (Lab).
+
+Note that the Device field is set to /dev/sdg. You will use this device identifier in a later task.
+
+Click Attach
+
+The volume state is now in-use.
+
+Mount the Restored Volume
+Create a directory for mounting the new storage volume:
+
+sudo mkdir /mnt/data-store2
+Mount the new volume:
+
+sudo mount /dev/sdg /mnt/data-store2
+Verify that volume you mounted has the file that you created earlier.
+
+ls /mnt/data-store2/
+You should see file.txt.
+/*
