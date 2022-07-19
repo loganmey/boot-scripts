@@ -1,0 +1,43 @@
+#make sure EBS is mounted and note the mount point ie /dev/sdf
+
+#view disc free
+df -h
+
+# output:
+#Filesystem      Size  Used Avail Use% Mounted on
+#devtmpfs        488M   60K  488M   1% /dev
+#tmpfs           497M     0  497M   0% /dev/shm
+#/dev/xvda1      7.8G  982M  6.7G  13% /
+
+#Create an ext3 file system on the new volume:
+sudo mkfs -t ext3 /dev/sdf
+
+#Create a directory for mounting the new storage volume:
+
+sudo mkdir /mnt/data-store
+
+#Mount the new volume:
+sudo mount /dev/sdf /mnt/data-store
+
+#To configure the Linux instance to mount this volume whenever the instance is started, you will need to add a line to /etc/fstab.
+
+echo "/dev/sdf   /mnt/data-store ext3 defaults,noatime 1 2" | sudo tee -a /etc/fstab
+#View the configuration file to see the setting on the last line:
+
+cat /etc/fstab
+#View the available storage again:
+
+df -h
+#The output will now contain an additional line - /dev/xvdf:
+
+#Filesystem      Size  Used Avail Use% Mounted on
+#devtmpfs        488M   60K  488M   1% /dev
+#tmpfs           497M     0  497M   0% /dev/shm
+#/dev/xvda1      7.8G  982M  6.7G  13% /
+#/dev/xvdf       976M  1.3M  924M   1% /mnt/data-store
+#On your mounted volume, create a file and add some text to it.
+
+sudo sh -c "echo some text has been written > /mnt/data-store/file.txt"
+#Verify that the text has been written to your volume.
+
+cat /mnt/data-store/file.txt

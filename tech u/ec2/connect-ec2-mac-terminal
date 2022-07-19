@@ -1,0 +1,4 @@
+#download .pem file
+cd ~/Downloads
+chmod 400 labsuser.pem
+ssh -i labsuser.pem ec2-user@<public-ip>
