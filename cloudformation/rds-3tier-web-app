@@ -1,0 +1,302 @@
+	
+AWSTemplateFormatVersion	"2010-09-09"
+Description	"AWS CloudFormation Sample Template to create a 3-tier stack via AMS CFN Ingest CT ct-36cn2avfrrj9v. Creates a highly available, scalable LAMP stack with an Amazon RDS database instance for the backend data store. It uses AWS Secrets Manager to store DB user/password in the ams-shared/myapp/dev/dbsecrets path. This template demonstrates using the AWS CloudFormation bootstrap scripts to install the packages and files necessary to deploy the Apache web server and PHP at instance launch time. **WARNING** This template creates one or more Amazon EC2 instances, an Application Load Balancer and an Amazon RDS DB instance. You will be billed for the AWS resources used if you create a stack from this template."
+Parameters	
+VpcId	
+Type	"AWS::EC2::VPC::Id"
+Description	"VpcId of your existing Virtual Private Cloud (VPC)"
+Default	"vpc-0d5777d3xxxxxxx74"
+ConstraintDescription	"Must be the VPC Id of an existing Virtual Private Cloud."
+DBName	
+Default	"myDatabase"
+Description	"MySQL database name"
+Type	"String"
+MinLength	"1"
+MaxLength	"64"
+AllowedPattern	"[a-zA-Z][a-zA-Z0-9]*"
+ConstraintDescription	"Must begin with a letter and contain only alphanumeric characters."
+DBAllocatedStorage	
+Default	"5"
+Description	"The size of the database (Gb)"
+Type	"Number"
+MinValue	"5"
+MaxValue	"1024"
+ConstraintDescription	"must be between 5 and 1024Gb."
+DBInstanceClass	
+Description	"The database instance type"
+Type	"String"
+Default	"db.t2.small"
+AllowedValues	
+0	"db.t2.small"
+1	"db.t2.medium"
+ConstraintDescription	"must select a valid database instance type."
+MultiAZDatabase	
+Default	"false"
+Description	"Create a Multi-AZ MySQL Amazon RDS database instance"
+Type	"String"
+AllowedValues	
+0	"true"
+1	"false"
+ConstraintDescription	"Must be either true or false."
+WebServerCapacity	
+Default	"1"
+Description	"The initial number of WebServer instances"
+Type	"Number"
+MinValue	"1"
+MaxValue	"5"
+ConstraintDescription	"Must be between 1 and 5 EC2 instances."
+IAMEC2InstanceProfile	
+Description	"WebServer EC2 IAM instance profile (with read permission to AWS Secrets Manager). Note role name must start with customer- in AMS environment."
+Type	"String"
+Default	"customer-mc-ec2-instance-profile-ssm"
+AllowedPattern	"^customer-[a-zA-Z0-9-_]*$|^$"
+ConstraintDescription	"A valid pre-existing EC2 IAM role aka instance profile with name starting with customer- ."
+InstanceType	
+Description	"WebServer EC2 instance type"
+Type	"String"
+Default	"t2.small"
+AllowedValues	
+0	"t2.small"
+1	"t2.medium"
+ConstraintDescription	"must be a valid EC2 instance type."
+InstanceAmiId	
+Description	"WebServer EC2 AMI Id"
+Type	"AWS::EC2::Image::Id"
+Default	"ami-0d2fa9fa36af62840"
+ConstraintDescription	"Must be the AMI Id of an existing AMI in your account. Ensure AMSified AMI is used, either as result of WIGS or have used AMS published AMI as a base."
+Resources	
+ALBSecurityGroup	
+Type	"AWS::EC2::SecurityGroup"
+Properties	
+GroupDescription	"Allow http to client host"
+VpcId	
+Ref	"VpcId"
+SecurityGroupIngress	
+0	
+IpProtocol	"tcp"
+FromPort	80
+ToPort	80
+CidrIp	"0.0.0.0/0"
+SecurityGroupEgress	
+0	
+IpProtocol	"tcp"
+FromPort	80
+ToPort	80
+CidrIp	"{{resolve:ssm:/app/DemoApp/VPCCidr:1}}"
+ApplicationLoadBalancer	
+Type	"AWS::ElasticLoadBalancingV2::LoadBalancer"
+Properties	
+Subnets	
+0	"{{resolve:ssm:/app/DemoApp/PublicSubnet1a:1}}"
+1	"{{resolve:ssm:/app/DemoApp/PublicSubnet1c:1}}"
+SecurityGroups	
+0	
+Ref	"ALBSecurityGroup"
+ALBListener	
+Type	"AWS::ElasticLoadBalancingV2::Listener"
+Properties	
+DefaultActions	
+0	
+Type	"forward"
+TargetGroupArn	
+Ref	"ALBTargetGroup"
+LoadBalancerArn	
+Ref	"ApplicationLoadBalancer"
+Port	80
+Protocol	"HTTP"
+ALBTargetGroup	
+Type	"AWS::ElasticLoadBalancingV2::TargetGroup"
+Properties	
+HealthCheckIntervalSeconds	300
+HealthCheckTimeoutSeconds	120
+HealthyThresholdCount	2
+Port	80
+Protocol	"HTTP"
+UnhealthyThresholdCount	2
+VpcId	
+Ref	"VpcId"
+TargetGroupAttributes	
+0	
+Key	"stickiness.enabled"
+Value	"true"
+1	
+Key	"stickiness.type"
+Value	"lb_cookie"
+2	
+Key	"stickiness.lb_cookie.duration_seconds"
+Value	"30"
+WebServerGroup	
+Type	"AWS::AutoScaling::AutoScalingGroup"
+Properties	
+VPCZoneIdentifier	
+0	"{{resolve:ssm:/app/DemoApp/PrivateSubnet1a:1}}"
+1	"{{resolve:ssm:/app/DemoApp/PrivateSubnet1c:1}}"
+LaunchConfigurationName	
+Ref	"LaunchConfig"
+MinSize	"1"
+MaxSize	"5"
+DesiredCapacity	
+Ref	"WebServerCapacity"
+TargetGroupARNs	
+0	
+Ref	"ALBTargetGroup"
+CreationPolicy	
+ResourceSignal	
+Timeout	"PT15M"
+Count	
+Ref	"WebServerCapacity"
+UpdatePolicy	
+AutoScalingRollingUpdate	
+MinInstancesInService	1
+MaxBatchSize	1
+PauseTime	"PT15M"
+WaitOnResourceSignals	true
+LaunchConfig	
+Type	"AWS::AutoScaling::LaunchConfiguration"
+Metadata	
+Comment1	"Configure the bootstrap helpers to install the Apache Web Server and PHP"
+Comment2	"The website content is downloaded from the CloudFormationPHPSample.zip file"
+AWS::CloudFormation::Init	
+config	
+packages	
+yum	
+httpd	[]
+php	[]
+php-mysql	[]
+jq	[]
+files	
+/var/www/html/index.php	
+content	{…}
+mode	"000600"
+owner	"apache"
+group	"apache"
+/etc/cfn/cfn-hup.conf	
+content	{…}
+mode	"000400"
+owner	"root"
+group	"root"
+/etc/cfn/hooks.d/cfn-auto-reloader.conf	
+content	{…}
+mode	"000400"
+owner	"root"
+group	"root"
+services	
+sysvinit	
+httpd	{…}
+cfn-hup	{…}
+Properties	
+ImageId	
+Ref	"InstanceAmiId"
+InstanceType	
+Ref	"InstanceType"
+IamInstanceProfile	
+Ref	"IAMEC2InstanceProfile"
+SecurityGroups	
+0	
+Ref	"WebServerSecurityGroup"
+UserData	
+Fn::Base64	
+Fn::Join	
+0	""
+1	
+0	"#!/bin/bash -x\n"
+1	"# Fix cfn-hup bug:\n"
+2	"ln -sfn /opt/aws/apitool…p /etc/init.d/cfn-hup\n"
+3	"# Install the files and …ges from the metadata\n"
+4	"/opt/aws/bin/cfn-init -v "
+5	" --stack "
+6	{…}
+7	" --resource LaunchConfig "
+8	" --region "
+9	{…}
+10	"\n"
+11	"STAT=$?"
+12	"\n# Retrieve the DB cred…, for App to consume.\n"
+13	"aws --region "
+14	{…}
+15	" secretsmanager get-secr…word\" > /dbpass.txt \n"
+16	"[[ ! -s /dbpass.txt ]] && STAT=1 \n"
+17	"aws --region "
+18	{…}
+19	" secretsmanager get-secr…name\" > /dbuser.txt \n"
+20	"[[ ! -s /dbuser.txt ]] && STAT=1 \n"
+21	"chmod 640 /dbuser.txt /dbpass.txt \n"
+22	"chgrp 48 /dbuser.txt /dbpass.txt \n"
+23	"# Signal the status from…nd above AWS commands\n"
+24	"/opt/aws/bin/cfn-signal -e $STAT "
+25	" --stack "
+26	{…}
+27	" --resource WebServerGroup "
+28	" --region "
+29	{…}
+30	"\n"
+WebServerSecurityGroup	
+Type	"AWS::EC2::SecurityGroup"
+Properties	
+GroupDescription	"Enable HTTP access via port 80 locked down to the ELB and SSH access"
+SecurityGroupIngress	
+0	
+IpProtocol	"tcp"
+FromPort	80
+ToPort	80
+SourceSecurityGroupId	
+Ref	"ALBSecurityGroup"
+VpcId	
+Ref	"VpcId"
+DBEC2SecurityGroup	
+Type	"AWS::EC2::SecurityGroup"
+Properties	
+GroupDescription	"Open database for access"
+SecurityGroupIngress	
+0	
+IpProtocol	"tcp"
+FromPort	3306
+ToPort	3306
+SourceSecurityGroupId	
+Ref	"WebServerSecurityGroup"
+VpcId	
+Ref	"VpcId"
+myDBSubnetGroup	
+Type	"AWS::RDS::DBSubnetGroup"
+Properties	
+DBSubnetGroupDescription	"description"
+SubnetIds	
+0	"{{resolve:ssm:/app/DemoApp/PrivateSubnet1a:1}}"
+1	"{{resolve:ssm:/app/DemoApp/PrivateSubnet1c:1}}"
+Tags	
+0	
+Key	"String"
+Value	"String"
+MySQLDatabase	
+Type	"AWS::RDS::DBInstance"
+Properties	
+Engine	"MySQL"
+DBName	
+Ref	"DBName"
+MultiAZ	
+Ref	"MultiAZDatabase"
+MasterUsername	"{{resolve:secretsmanager:ams-shared/myapp/dev/dbsecrets:SecretString:username}}"
+MasterUserPassword	"{{resolve:secretsmanager:ams-shared/myapp/dev/dbsecrets:SecretString:password}}"
+DBInstanceClass	
+Ref	"DBInstanceClass"
+AllocatedStorage	
+Ref	"DBAllocatedStorage"
+DBSubnetGroupName	
+Ref	"myDBSubnetGroup"
+VPCSecurityGroups	
+0	
+Fn::GetAtt	
+0	"DBEC2SecurityGroup"
+1	"GroupId"
+Outputs	
+WebsiteURL	
+Description	"URL for newly created LAMP stack"
+Value	
+Fn::Join	
+0	""
+1	
+0	"http://"
+1	
+Fn::GetAtt	
+0	"ApplicationLoadBalancer"
+1	"DNSName"
