@@ -1,0 +1,45 @@
+# Works from and Existing (bastion) EC2 Instance that has been SSH'd into
+
+#log into bastion host / command host
+#download pem file
+cd ~/Downloads
+chmod 400 labsuser.pem
+ssh -i labsuser.pem ec2-user@<public-ip>
+
+#configure AWS CLI
+#discover region
+curl http://169.254.169.254/latest/dynamic/instance-identity/document | grep region
+
+#update CLI credentials
+aws configure
+
+#enter information:
+#AWS Access Key ID: Press enter.
+#AWS Secret Access Key: Press enter.
+#Default region name: Type in the name of the region, which you just discovered a moment ago. For example, us-east-1 or eu-west-2.
+#Default output format: json
+
+#change directory to script location
+cd /home/ec2-user/
+
+#Create a EC2 Instance
+#Inspect UserData.txt
+more UserData.txt
+
+#create new instance
+aws ec2 run-instances --key-name vockey --instance-type t3.micro --image-id ami-0c43067304fd16596 --user-data file:///home/ec2-user/UserData.txt --security-group-ids sg-0d392a4ba5d826e79 --subnet-id subnet-0a5d334f1e3e472db --associate-public-ip-address --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=WebServerBaseImage}]' --output text --query 'Instances[*].InstanceId'
+#returns instance id i-09ea1640de31f7740
+
+#monitor instance
+aws ec2 wait instance-running --instance-ids NEW-INSTANCE-ID
+
+#query public DNS of new webserver
+aws ec2 describe-instances --instance-id NEW-INSTANCE-ID --query 'Reservations[0].Instances[0].NetworkInterfaces[0].Association.PublicDnsName'
+aws ec2 describe-instances --instance-id i-09ea1640de31f7740 --query 'Reservations[0].Instances[0].NetworkInterfaces[0].Association.PublicDnsName'
+
+http://PUBLIC-DNS-ADDRESS/index.php
+
+#create custom AMI based on instance
+aws ec2 create-image --name WebServer --instance-id NEW-INSTANCE-ID
+aws ec2 create-image --name WebServer --instance-id i-09ea1640de31f7740
+#returns image ID "ImageId": "ami-094f754205b0aaa1c"
