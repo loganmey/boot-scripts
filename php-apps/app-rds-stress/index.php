@@ -23,6 +23,8 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
       <?php include("show-instance.php"); ?>
     </div>
     </div>
+
+
     <!-- Begin Logan Meyer Edit August 16, 2022. -->
     <!-- Edit to include stress testing functionality -->
 
@@ -58,6 +60,7 @@ type="submit" value="Stop Stress" /></form></td>
         </table> </center> <!-- end content --> </div>
 
     <!-- End Logan Meyer Edit August 16, 2022. -->    
+    
     </div>
 
     <script src="js/jquery.min.js"></script>
